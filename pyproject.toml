@@ -9,10 +9,7 @@ authors = [
     { name = "Germinal Team" }
 ]
 
-# To install:
-# 1. uv sync
-# 2. ./install_pyrosetta.sh (installs PyRosetta wheel)
-# 3. ./download_params.sh (downloads AlphaFold parameters - optional)
+# Installation: uv sync
 
 dependencies = [
     # Core scientific packages
@@ -59,10 +56,8 @@ dependencies = [
     "hydra-core",
     "omegaconf",
 
-    # PyRosetta installer (used to get the wheel URL)
-    "pyrosetta-installer",
-    # PyRosetta wheel (must be installed separately after sync)
-    # "pyrosetta @ https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl",
+    # PyRosetta wheel (academic license required for use)
+    "pyrosetta @ https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl",
 ]
 
 [project.optional-dependencies]

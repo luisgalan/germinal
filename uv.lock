@@ -634,7 +634,7 @@ dependencies = [
     { name = "optax" },
     { name = "pandas" },
     { name = "py3dmol" },
-    { name = "pyrosetta-installer" },
+    { name = "pyrosetta" },
     { name = "rotary-embedding-torch" },
     { name = "scipy" },
     { name = "seaborn" },
@@ -681,7 +681,7 @@ requires-dist = [
     { name = "optax" },
     { name = "pandas" },
     { name = "py3dmol" },
-    { name = "pyrosetta-installer" },
+    { name = "pyrosetta", url = "https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "rotary-embedding-torch" },
     { name = "ruff", marker = "extra == 'dev'" },
@@ -1992,13 +1992,25 @@ wheels = [
 ]
 
 [[package]]
-name = "pyrosetta-installer"
-version = "0.1.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fc/e5/f65f56754c5ce31fc63cc8d29cc6b148f1730488f80e3dade1d10fd2ae17/pyrosetta_installer-0.1.2.tar.gz", hash = "sha256:cc442000a9470f9fbacad286b5e4620739321f39e3e7bb5f66a76a5e97c3359c", size = 3597, upload-time = "2024-10-22T20:12:53.752Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/5e/186bbc2fc9b66acbee19d21f30df611dca3bac7e76eb5da51aa664ea1c43/pyrosetta_installer-0.1.2-py3-none-any.whl", hash = "sha256:5fc2addb4083f1fc29b3e2b816df93610367a00b70d94030026447d6786c0305", size = 3906, upload-time = "2024-10-22T20:12:52.317Z" },
+name = "pyrosetta"
+version = "2026.5+release.8448272836"
+source = { url = "https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl" }
+dependencies = [
+    { name = "numpy" },
 ]
+wheels = [
+    { url = "https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl", hash = "sha256:710e3d0d0ee74ecd44fc56a43a6e272e8682f3f3a79234d958e7691afe8f56bd" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "blosc", marker = "extra == 'distributed'" },
+    { name = "numpy" },
+    { name = "numpy", marker = "extra == 'distributed'" },
+    { name = "pandas", marker = "extra == 'distributed'" },
+    { name = "traitlets", marker = "extra == 'distributed'" },
+]
+provides-extras = ["distributed"]
 
 [[package]]
 name = "pytest"

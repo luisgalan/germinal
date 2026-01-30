@@ -77,9 +77,8 @@ def main() -> int:
     except Exception:
         print_status(
             "WARN",
-            "PyRosetta not found. If you have a licensed build, install via: \n"
-            "  bash scripts/install_env.sh --pyrosetta /path/to/pyrosetta.whl\n"
-            "See README for details."
+            "PyRosetta not found. It should be installed via uv sync. "
+            "Note: PyRosetta requires an academic license for use."
         )
 
     print_status("OK", "All checks passed")
