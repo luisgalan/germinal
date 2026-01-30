@@ -28,7 +28,6 @@ import numpy as np
 import pandas as pd
 
 from typing import Union, List
-from colabfold.colabfold import run_mmseqs2
 from Bio import PDB
 from concurrent.futures import ProcessPoolExecutor, TimeoutError
 
@@ -264,6 +263,8 @@ def generate_colabfold_msa(sequence, design_name, output_dir, use_metagenomic_db
         str: Relative path to generated MSA file, or empty string if failed.
     """
     try:
+        from colabfold.colabfold import run_mmseqs2
+        
         print(
             f"Running colabfold_search for {design_name} with use_env={use_metagenomic_db}"
         )

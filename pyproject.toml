@@ -1,0 +1,133 @@
+[project]
+name = "germinal"
+version = "0.1.0"
+description = "Germinal: Efficient generation of epitope-targeted de novo antibodies"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Germinal Team" }
+]
+
+# To install:
+# 1. uv sync
+# 2. ./install_pyrosetta.sh (installs PyRosetta wheel)
+# 3. ./download_params.sh (downloads AlphaFold parameters - optional)
+
+dependencies = [
+    # Core scientific packages
+    "pandas",
+    "matplotlib",
+    "numpy",
+    "biopython",
+    "scipy",
+    "seaborn",
+    "tqdm",
+    "ffmpeg-python",
+    "py3dmol",
+
+    # JAX ecosystem (pinned versions)
+    "jax==0.5.3",
+    "jax-cuda12-plugin==0.5.3",
+    "chex",
+    "dm-haiku==0.0.13",
+    "dm-tree",
+    "joblib",
+    "ml-collections",
+    "immutabledict",
+    "optax",
+
+    # Additional scientific tools
+    "cvxopt",
+    "mdtraj",
+    "ipsae",
+
+    # PyTorch ecosystem (version 2.6.0)
+    "torch==2.6.0",
+    "torchvision==0.21.0",
+    "torchaudio==2.6.0",
+    "torchtyping==0.1.5",
+    "torch-geometric==2.6.*",
+
+    # Bio/ML tools
+    "iglm",
+    "chai-lab==0.6.1",
+    "ablang2",
+    "rotary-embedding-torch",
+
+    # Configuration management
+    "hydra-core",
+    "omegaconf",
+
+    # PyRosetta installer (used to get the wheel URL)
+    "pyrosetta-installer",
+    # PyRosetta wheel (must be installed separately after sync)
+    # "pyrosetta @ https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+    "ipython",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["germinal*"]
+
+[tool.setuptools.package-data]
+germinal = ["**/*"]
+
+# UV-specific configuration
+[tool.uv]
+override-dependencies = [
+    "jax==0.5.3",
+    "dm-haiku==0.0.13",
+]
+
+# Index configuration for PyTorch packages
+index = [
+    { name = "pytorch-cu124", url = "https://download.pytorch.org/whl/cu124", explicit = true },
+]
+
+# Package source configuration
+[tool.uv.sources]
+# PyTorch packages from CUDA index
+torch = { index = "pytorch-cu124" }
+torchvision = { index = "pytorch-cu124" }
+torchaudio = { index = "pytorch-cu124" }
+
+# ColabDesign as local editable package
+colabdesign = { path = "colabdesign", editable = true }
+
+# Black configuration
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+
+# Ruff configuration
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v"
