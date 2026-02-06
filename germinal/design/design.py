@@ -38,6 +38,7 @@ from colabdesign.af.alphafold.common import residue_constants
 from colabdesign.af.loss import get_ptm, mask_loss, get_dgram_bins
 from germinal.utils.utils import hotspot_residues, calculate_clash_score
 from germinal.utils.io import IO
+import wandb
 
 
 def germinal_design(
@@ -46,6 +47,7 @@ def germinal_design(
     target_settings: dict,
     io: IO,
     seed: int = None,
+    wandb_run: wandb.Run | None = None
 ):
     """
     Conduct binder hallucination with ColabDesign AF2 model.
@@ -60,12 +62,15 @@ def germinal_design(
     Returns:
         Configured AF model instance with hallucination results
     """
+
+
+
     # Extract configuration parameters from input dictionaries
     starting_pdb = run_settings["starting_pdb_complex"]
     chain = target_settings["target_chain"]
     target_hotspot_residues = target_settings.get("target_hotspots", "")
     design_models = run_settings.get("design_models", [0,1,2,3,4])
-    
+
     # Unpack individual parameters from run_settings
     pos = run_settings.get("cdr_positions")
     cdr_lengths = run_settings.get("cdr_lengths")
@@ -86,7 +91,7 @@ def germinal_design(
     use_pos_distance = run_settings.get("use_pos_distance", True)
     grad_merge_method = run_settings.get("grad_merge_method", "pcgrad")
     ablm_scale = run_settings.get("ablm_scale", [0.0, 0.2, 0.4, 1.0])
-    ablm_temp = run_settings.get("ablm_temp", 0.6) 
+    ablm_temp = run_settings.get("ablm_temp", 0.6)
     vh_len = run_settings.get("vh_len", None)
     vh_first = run_settings.get("vh_first", True)
     vl_len = run_settings.get("vl_len", None)
@@ -174,7 +179,7 @@ def germinal_design(
             "cdrs": cdr_lengths,
         },
     )
-    
+
     # Configure loss function weights based on specified settings
     af_model.opt["weights"].update(
         {
@@ -249,6 +254,7 @@ def germinal_design(
         num_models=num_models,
         sample_models=run_settings.get("sample_models", True),
         save_best=True,
+        wandb_run=wandb_run
     )
 
     # Evaluate confidence metrics of the best iteration based on lowest loss value
@@ -284,6 +290,7 @@ def germinal_design(
                 save_best=True,
                 save_filters=save_filters,
                 seq_entropy_threshold=seq_entropy_threshold,
+                wandb_run=wandb_run,
             )
             softmax_plddt, softmax_iptm = get_best_plddt(af_model, length)
             softmax_pae, softmax_ipae = get_best_pae_ipae(af_model, length)
@@ -319,6 +326,7 @@ def germinal_design(
                     ramp_models=False,
                     save_best=True,
                     get_best=best_for_greedy,
+                    wandb_run=wandb_run,
                 )
 
         else:
@@ -424,15 +432,15 @@ def germinal_design(
 
 def get_best_plddt(af_model, length):
     """Extract confidence metrics from the best model iteration.
-    
+
     Calculates the predicted Local Distance Difference Test (pLDDT) and
     interface predicted Template Modeling score (iPTM) for the binder region
     of the best model according to the lowest loss value.
-    
+
     Args:
         af_model: ColabDesign AF model instance containing optimization results
         length (int): Length of the binder sequence for metric calculation
-        
+
     Returns:
         tuple: (plddt, iptm) where:
             - plddt (float): Mean pLDDT score for the binder region (0-1 scale)
@@ -446,14 +454,14 @@ def get_best_plddt(af_model, length):
 
 def get_best_pae_ipae(af_model, length):
     """Extract Predicted Aligned Error metrics from the best model iteration.
-    
+
     Retrieves the Predicted Aligned Error (PAE) and interface PAE (iPAE) values
     from the best model iteration for structure quality assessment.
-    
+
     Args:
         af_model: ColabDesign AF model instance containing optimization results
         length (int): Length parameter (currently unused but maintained for API consistency)
-        
+
     Returns:
         tuple: (pae, ipae) where:
             - pae (float): Predicted Aligned Error for the overall structure
@@ -466,15 +474,15 @@ def get_best_pae_ipae(af_model, length):
 
 def add_rg_loss(self, weight=0.1):
     """Add radius of gyration loss function to control protein compactness.
-    
+
     Implements a radius of gyration constraint to encourage compact protein
     structures. The loss penalizes structures that deviate from the expected
     radius of gyration based on the protein length.
-    
+
     Args:
         self: ColabDesign AF model instance
         weight (float, optional): Weight for the radius of gyration loss term. Defaults to 0.1.
-        
+
     Note:
         The theoretical radius of gyration is calculated using the empirical formula:
         rg_th = 2.38 * N^0.365, where N is the number of residues.
@@ -496,15 +504,15 @@ def add_rg_loss(self, weight=0.1):
 
 def add_i_ptm_loss(self, weight=0.1):
     """Add interface predicted Template Modeling score loss function.
-    
+
     Implements an interface pTM loss to optimize the predicted confidence
     of the protein-protein interface. This loss encourages high-confidence
     binding interfaces by penalizing low interface pTM scores.
-    
+
     Args:
         self: ColabDesign AF model instance
         weight (float, optional): Weight for the interface pTM loss term. Defaults to 0.1.
-        
+
     Note:
         The loss is computed as (1 - interface_pTM) to minimize when interface
         confidence is high.
@@ -521,15 +529,15 @@ def add_i_ptm_loss(self, weight=0.1):
 
 def add_helix_loss(self, weight=0):
     """Add helical secondary structure loss function.
-    
+
     Implements a loss function that promotes alpha-helical secondary structure
     in specified regions of the protein. The loss is based on distance constraints
     typical of alpha-helical geometry (i, i+3 contacts).
-    
+
     Args:
         self: ColabDesign AF model instance
         weight (float, optional): Weight for the helix loss term. Defaults to 0.
-        
+
     Note:
         The loss uses distance cutoffs of 2.0-6.2 Å to identify helical contacts
         and applies the constraint either globally or to specific positions
@@ -601,15 +609,15 @@ def add_helix_loss(self, weight=0):
 
 def add_beta_strand_loss(self, weight=0):
     """Add beta strand secondary structure loss function.
-    
+
     Implements a loss function that promotes beta strand secondary structure
     in specified regions of the protein. The loss is based on distance constraints
     typical of beta strand geometry.
-    
+
     Args:
         self: ColabDesign AF model instance
         weight (float, optional): Weight for the beta strand loss term. Defaults to 0.
-        
+
     Note:
         The loss uses distance cutoffs of 9.75-11.5 Å to identify beta strand
         contacts and applies the constraint to positions defined in self.opt['pos'].
@@ -663,16 +671,16 @@ def add_beta_strand_loss(self, weight=0):
 
 def add_beta_sheet_loss(self, cdr_lengths, weight=0):
     """Add beta sheet secondary structure loss function for CDR regions.
-    
+
     Implements a sophisticated loss function that promotes beta sheet formation
     within and between CDR (Complementarity Determining Region) loops. The loss
     considers multiple pairing configurations for each CDR region.
-    
+
     Args:
         self: ColabDesign AF model instance
         cdr_lengths (list): List of CDR lengths for proper region segmentation
         weight (float, optional): Weight for the beta sheet loss term. Defaults to 0.
-        
+
     Note:
         Only processes CDRs with length >= 7 residues. Uses distance cutoffs
         of 4.4-6.0 Å for beta sheet contact identification and employs JIT
@@ -780,16 +788,16 @@ def add_beta_sheet_loss(self, cdr_lengths, weight=0):
 
 def add_termini_distance_loss(self, weight=0.1, threshold_distance=7.0):
     """Add N- and C-terminus distance constraint loss function.
-    
+
     Implements a loss function that constrains the distance between the N- and
     C-termini of the binder protein. This can be useful for promoting compact
     structures or specific geometric arrangements.
-    
+
     Args:
         self: ColabDesign AF model instance
         weight (float, optional): Weight for the termini distance loss term. Defaults to 0.1.
         threshold_distance (float, optional): Target distance between termini in Angstroms. Defaults to 7.0.
-        
+
     Note:
         The loss uses ELU activation followed by ReLU to ensure non-negative values
         and smooth gradients. Only applies to the binder region of the protein.
@@ -821,16 +829,16 @@ def add_termini_distance_loss(self, weight=0.1, threshold_distance=7.0):
 
 def log_trajectory(af_model, design_name, io):
     """Log design trajectory metrics to CSV file for analysis.
-    
+
     Extracts and saves various optimization metrics from the design trajectory
     to a CSV file for subsequent analysis and visualization. Handles variable-length
     trajectories by padding missing values appropriately.
-    
+
     Args:
         af_model: ColabDesign AF model instance containing trajectory data
         design_name (str): Unique identifier for this design trajectory
         io (IO): IO handler instance for file path management
-        
+
     Note:
         Saves metrics including loss, confidence scores (pLDDT, pTM), contact scores,
         PAE values, secondary structure losses, and language model likelihood.
@@ -880,15 +888,15 @@ def log_trajectory(af_model, design_name, io):
 
 def plot_trajectory(af_model, design_name, io):
     """Generate and save trajectory loss plots for design analysis.
-    
+
     Creates individual plots for key optimization metrics throughout the design
     trajectory. Saves both PNG images and raw data files for further analysis.
-    
+
     Args:
         af_model: ColabDesign AF model instance containing trajectory data
         design_name (str): Unique identifier for this design trajectory
         io (IO): IO handler instance for file path management
-        
+
     Note:
         Currently focuses on overall loss and AbLM likelihood metrics. Additional
         metrics can be enabled by modifying the metrics_to_plot list.
@@ -948,12 +956,12 @@ def save_pssm_gradient_grid_animation(
     ncols: int = 1,
 ) -> None:
     """Generate animated visualization of PSSM and gradient evolution.
-    
+
     Creates a synchronized multi-panel animation showing the evolution of
     position-specific scoring matrices (PSSM) and gradients throughout the
     optimization trajectory. Each metric is displayed in its own subplot
     with consistent timing for comparative analysis.
-    
+
     Args:
         af_model: ColabDesign AF model instance containing trajectory data
         design_name (str): Unique identifier for this design trajectory
@@ -962,10 +970,10 @@ def save_pssm_gradient_grid_animation(
             ("seq", "af_grad", "ablm_grad", "total_grad").
         fps (int, optional): Frames per second for animation. Defaults to 5.
         ncols (int, optional): Number of columns in subplot grid. Defaults to 1.
-        
+
     Returns:
         None: Saves animation as GIF file to the plots directory.
-        
+
     Note:
         Requires trajectory data with 20 amino acid dimensions. Uses different
         color schemes for sequence probabilities (Blues) vs. gradients (seismic).

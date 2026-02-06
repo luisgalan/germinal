@@ -7,3 +7,7 @@ target_pdb_path: "pdbs/il3.pdb"
 target_chain: "A"
 binder_chain: "B"
 target_hotspots: "A23,A25,A26,A31,A40,A104"
+
+# Residue to be used for Chai-1 distance constraint ({residue 1-letter}{res. num.}).
+# Can delete or set to None if no constraint. Residue should be in chain A
+hotspot_residue: "L26"

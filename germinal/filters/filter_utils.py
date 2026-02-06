@@ -56,7 +56,7 @@ def run_filters(
     target_sequence = []
     sequences_from_pdb = utils.get_sequence_from_pdb(run_settings["starting_pdb_complex"])
 
-    for ch in target_chain.split(","):    
+    for ch in target_chain.split(","):
         target_sequence.append(sequences_from_pdb[
             ch
         ])
@@ -276,6 +276,7 @@ def build_filter_metrics(
     Returns:
         Dict[str, Any]: Confidence, interface, structural, biological, and sequence metrics
     """
+    ipsae = confidence_metrics["ipsae"]
     metrics = {
         # confidence
         "external_plddt": confidence_metrics["plddt"],
@@ -288,7 +289,7 @@ def build_filter_metrics(
         "external_plddt_binder": confidence_metrics["plddt_binder"],
         "external_chain_ptm": confidence_metrics["chain_ptm"],
         "external_binder_pae": confidence_metrics["binder_pae"],
-        "ipsae": confidence_metrics["ipsae"]["ipsae"],
+        "ipsae": None if ipsae is None else ipsae["ipsae"],
         # structure + interface
         "binder_near_hotspot": binder_near_hotspot,
         "clashes_unrelaxed": num_clashes_trajectory,
@@ -334,7 +335,7 @@ def build_filter_metrics(
         "binder_near_hotspot": binder_near_hotspot,
         # derived confidence
         "pdockq2": pdockq_metrics["pDockQ2"],
-        "ipsae_pdockq2": confidence_metrics["ipsae"]["pdockq2"],
+        "ipsae_pdockq2": None if ipsae is None else ipsae["pdockq2"],
         "lis_lis": lis_metrics["lis"],
         "lis_lia": lis_metrics["lia"],
         # secondary structure + framework metrics
@@ -604,7 +605,7 @@ def compute_hotspot_proximity(
                     )
                 )
             except Exception:
-                binder_near_chain_ht, cdr3_hotspot_contacts_ch, cdr_hotspot_contacts_ch = (False, 0, 0) 
+                binder_near_chain_ht, cdr3_hotspot_contacts_ch, cdr_hotspot_contacts_ch = (False, 0, 0)
 
             binder_near_hotspot.append(binder_near_chain_ht)
             cdr3_hotspot_contacts += cdr3_hotspot_contacts_ch

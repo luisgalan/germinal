@@ -40,15 +40,15 @@ from germinal.utils.io import RunLayout, IO
 
 def process_config(cfg: DictConfig) -> Dict[str, Any]:
     """Process Hydra configuration and convert to system-expected format.
-    
+
     Takes a Hydra DictConfig object and converts it into the standardized format
     expected by the Germinal system. Separates configuration into run parameters,
     target specifications, and filtering criteria.
-    
+
     Args:
         cfg (DictConfig): Hydra configuration object containing nested configuration
             sections including 'target', 'filter', and run parameters.
-            
+
     Returns:
         Dict[str, Any]: Processed configuration dictionary with four main keys:
             - 'run': Run configuration parameters (excluding target and filter sections)
@@ -85,15 +85,15 @@ def initialize_germinal_run(
     run_settings: Dict[str, Any], target_settings: Dict[str, Any]
 ):
     """Initialize a complete Germinal design run with validation and setup.
-    
+
     Performs comprehensive initialization of a Germinal protein design run including
     device validation, directory structure creation, starting structure generation,
     and configuration of all necessary parameters for the design process.
-    
+
     The function validates computational resources (JAX/CUDA availability), creates
     the required directory structure, generates or validates starting PDB complexes,
     computes CDR positions, and configures model parameters for the design run.
-    
+
     Args:
         run_settings (Dict[str, Any]): Run configuration parameters including:
             - project_dir: Base project directory path
@@ -104,13 +104,13 @@ def initialize_germinal_run(
             - type: Binder type ('nb' for nanobody, 'scfv' for single-chain Fv)
             - use_multimer_design: Whether to use multimer models
             - bias_redesign: Bias value for redesign (negative values set to False)
-            
+
         target_settings (Dict[str, Any]): Target-specific configuration including:
             - target_name: Name of the target protein
             - target_pdb_path: Path to target PDB structure
             - binder_chain: Chain identifier for binder (default 'B')
             - target_chain: Chain identifier for target (default 'A')
-            
+
     Returns:
         tuple: (io, run_settings) where:
             - io (IO): Initialized I/O handler for the run with directory structure
@@ -119,7 +119,7 @@ def initialize_germinal_run(
                 * starting_binder_seq: Extracted binder sequence from starting structure
                 * starting_pdb_complex: Path to the starting PDB complex
                 * design_models: List of model indices for AF2 design
-                
+
     Raises:
         AssertionError: If JAX device is not available or CUDA is not accessible
         AssertionError: If target PDB path does not exist

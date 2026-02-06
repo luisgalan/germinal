@@ -22,7 +22,6 @@ dependencies = [
     "tqdm",
     "ffmpeg-python",
     "py3dmol",
-
     # JAX ecosystem (pinned versions)
     "jax==0.5.3",
     "jax-cuda12-plugin==0.5.3",
@@ -33,31 +32,27 @@ dependencies = [
     "ml-collections",
     "immutabledict",
     "optax",
-
     # Additional scientific tools
     "cvxopt",
     "mdtraj",
     "ipsae",
-
     # PyTorch ecosystem (version 2.6.0)
     "torch==2.6.0",
     "torchvision==0.21.0",
     "torchaudio==2.6.0",
     "torchtyping==0.1.5",
     "torch-geometric==2.6.*",
-
     # Bio/ML tools
     "iglm",
     "chai-lab==0.6.1",
     "ablang2",
     "rotary-embedding-torch",
-
     # Configuration management
     "hydra-core",
     "omegaconf",
-
     # PyRosetta wheel (academic license required for use)
     "pyrosetta @ https://west.rosettacommons.org/pyrosetta/release/release/PyRosetta4.Release.python310.ubuntu.wheel/pyrosetta-2026.5+release.8448272836-cp310-cp310-linux_x86_64.whl",
+    "wandb>=0.24.2",
 ]
 
 [project.optional-dependencies]

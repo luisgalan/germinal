@@ -13,6 +13,8 @@ from germinal.filters import filter_utils, redesign
 from germinal.utils import utils, config
 from germinal.utils.io import Trajectory
 
+import wandb
+
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def main(cfg: DictConfig):
@@ -50,12 +52,12 @@ def main(cfg: DictConfig):
         init_seed = int(time.time_ns()) % (2**32 - 1)
         print(f"Initial seed: {init_seed}")
         np.random.seed(init_seed)
-    
+
     start_time = time.time()
     failed_design = 0
     num_accepted = 0
     num_failed = 0
-    
+
     # =================================== Germinal hallucination loop
     for i in range(run_settings["max_trajectories"]):
         # Check termination conditions
@@ -91,9 +93,15 @@ def main(cfg: DictConfig):
         print(f"\nStarting trajectory {i + 1}: {design_name}")
 
         # Germinal design function
-        design_output = germinal_design(
-            design_name, run_settings, target_settings, io, seed
-        )
+        with wandb.init(
+            project='germinal',
+            name=design_name,
+            tags=[run_settings['type'], target_settings['target_name']],
+            # mode='offline',
+        ) as wandb_run:
+            design_output = germinal_design(
+                design_name, run_settings, target_settings, io, seed, wandb_run
+            )
 
         # retrieve hallucination status
         trajectory_metrics_last = utils.copy_dict(design_output.aux["log"])  # final log
@@ -187,7 +195,7 @@ def main(cfg: DictConfig):
             for j, abmpnn_sequence in enumerate(abmpnn_sequences):
                 mpnn_trajectory = trajectory.copy()
                 mpnn_trajectory.rename(f"{design_name}_abmpnn_{j + 1}")
-                
+
                 # run final set of filters on AbMPNN redesigned sequences
                 print("Running final filters on AbMPNN redesigned sequences")
                 filter_metrics, filter_results, accepted, final_struct = (
@@ -227,7 +235,7 @@ def main(cfg: DictConfig):
                 else:
                     num_failed += 1
                 utils.clear_memory(clear_jax=False)
-    
+
     # print and save final run summary
     total_runtime = utils.get_clean_time(time.time(), start_time)
     run_summary = f"Finished all designs after {i + 1} attempted trajectories.\n" \
