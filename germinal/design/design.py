@@ -262,7 +262,9 @@ def germinal_design(
     initial_pae, initial_ipae = get_best_pae_ipae(af_model, length)
 
     # Proceed with optimization if initial trajectory meets confidence thresholds
-    if initial_plddt > save_filters["plddt"] and initial_iptm > save_filters["i_ptm"]:
+    # (unless early stopping is disabled)
+    disable_early_stopping = run_settings.get("disable_early_stopping", False)
+    if disable_early_stopping or (initial_plddt > save_filters["plddt"] and initial_iptm > save_filters["i_ptm"]):
         print(
             "Initial trajectory pLDDT/iPTM good, continuing: ",
             str(initial_plddt),
@@ -299,12 +301,15 @@ def germinal_design(
             softmax_iptm = initial_iptm
             softmax_ipae = initial_ipae
 
-        # perform one hot encoding
+        # perform one hot encoding (unless early stopping is disabled)
         if (
-            softmax_plddt > save_filters["plddt"]
-            and softmax_iptm > save_filters["i_ptm"]
-            and softmax_ipae < save_filters["i_pae"]
-            and af_model._tmp["best"]["mean_soft_pseudo"] >= seq_entropy_threshold
+            disable_early_stopping
+            or (
+                softmax_plddt > save_filters["plddt"]
+                and softmax_iptm > save_filters["i_ptm"]
+                and softmax_ipae < save_filters["i_pae"]
+                and af_model._tmp["best"]["mean_soft_pseudo"] >= seq_entropy_threshold
+            )
         ):
             print(
                 "Softmax trajectory pLDDT good, continuing (plddt/iptm/ipae): ",
@@ -330,27 +335,31 @@ def germinal_design(
                 )
 
         else:
-            io.update_failures("Trajectory_softmax_pLDDT")
+            if not disable_early_stopping:
+                io.update_failures("Trajectory_softmax_pLDDT")
             print(
-                "Softmax trajectory metrics too low to continue: ",
+                "Softmax trajectory metrics: " if disable_early_stopping else "Softmax trajectory metrics too low to continue: ",
                 str(softmax_plddt),
                 "/",
                 str(softmax_iptm),
                 "/",
                 str(softmax_ipae),
             )
-            fail_confidence = True
+            if not disable_early_stopping:
+                fail_confidence = True
     else:
-        io.update_failures("Trajectory_logits_pLDDT")
+        if not disable_early_stopping:
+            io.update_failures("Trajectory_logits_pLDDT")
         print(
-            "Initial trajectory metrics too low to continue: ",
+            "Initial trajectory metrics: " if disable_early_stopping else "Initial trajectory metrics too low to continue: ",
             str(initial_plddt),
             "/",
             str(initial_iptm),
             "/",
             str(initial_ipae),
         )
-        fail_confidence = True
+        if not disable_early_stopping:
+            fail_confidence = True
 
     ### save trajectory PDB
     final_plddt, final_iptm = get_best_plddt(af_model, length)

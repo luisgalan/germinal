@@ -4,10 +4,10 @@
 # General run settings
 type: "nb"
 cdr_lengths: [11, 8, 18]
-fw_lengths: [25,17,38,14]
+fw_lengths: [25, 17, 38, 14]
 pregenerate_seeds: false
 vh_first: null # not needed for nanobodies
-vh_len: null # not needed for nanobodies  
+vh_len: null # not needed for nanobodies
 vl_len: null # not needed for nanobodies
 
 # Loss function parameters
@@ -45,7 +45,7 @@ grad_merge_method: "pcgrad"
 ablm_scale: [0.2, 0.4, 0.4, 1.0]
 ablm_temp: 0.6
 iglm_species: "[HUMAN]"
-seq_init_mode: ["gumbel", "soft"]  # STATIC: Fixed list, no argparse option
+seq_init_mode: ["gumbel", "soft"] # STATIC: Fixed list, no argparse option
 bias_redesign: 10
 use_pos_distance: true
 clear_best: true
@@ -111,12 +111,15 @@ force_reject_AA: false
 dgram_cce: 0.01
 show_config: true
 
+# Early stopping settings
+disable_early_stopping: false # If true, runs all optimization phases regardless of intermediate metrics
+
 # Filter thresholds (moved from hardcoded values in code)
-clash_threshold: 2.4           # Å for atomic clash detection
-hotspot_distance_threshold: 5.3  # Å to consider residues near hotspots
-residue_contact_distance: 6.0    # Å threshold for residue-residue contact
-min_cdr_hotspot_contacts: 3      # minimum hotspot contacts in CDRs
-sap_limit_sasa: 3.0              # minimal SASA in patch to consider
-sap_patch_radius: 7.5            # Å radius for SAP patch
-sap_avg_sasa_patch_thr: 1.5      # average SASA threshold per patch
-atom_distance_cutoff: 3.0        # Å threshold for atom distance in redesign
+clash_threshold: 2.4 # Å for atomic clash detection
+hotspot_distance_threshold: 5.3 # Å to consider residues near hotspots
+residue_contact_distance: 6.0 # Å threshold for residue-residue contact
+min_cdr_hotspot_contacts: 3 # minimum hotspot contacts in CDRs
+sap_limit_sasa: 3.0 # minimal SASA in patch to consider
+sap_patch_radius: 7.5 # Å radius for SAP patch
+sap_avg_sasa_patch_thr: 1.5 # average SASA threshold per patch
+atom_distance_cutoff: 3.0 # Å threshold for atom distance in redesign
