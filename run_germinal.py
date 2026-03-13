@@ -129,19 +129,26 @@ def main(cfg: DictConfig):
         # ====================================================================================
         # First filter check - cofold and check basic structural filters
         # ====================================================================================
-        print("Running initial cofolding filters")
-        filter_metrics, filter_results, pass_initial_filters, final_struct = (
-            filter_utils.run_filters(
-                trajectory,
-                run_settings,
-                target_settings,
-                initial_filters,
-                io,
-                trajectory_sequence,
-                trajectory_pdb_af,
-                target_len
+        if run_settings.get("disable_filters", False):
+            print("Filters disabled, skipping initial cofolding filters")
+            pass_initial_filters = True
+            filter_metrics = {}
+            filter_results = {}
+            final_struct = trajectory_pdb_af
+        else:
+            print("Running initial cofolding filters")
+            filter_metrics, filter_results, pass_initial_filters, final_struct = (
+                filter_utils.run_filters(
+                    trajectory,
+                    run_settings,
+                    target_settings,
+                    initial_filters,
+                    io,
+                    trajectory_sequence,
+                    trajectory_pdb_af,
+                    target_len
+                )
             )
-        )
 
         utils.clear_memory(clear_jax=False)
         if not pass_initial_filters:
@@ -189,19 +196,26 @@ def main(cfg: DictConfig):
                 mpnn_trajectory.rename(f"{design_name}_abmpnn_{j + 1}")
                 
                 # run final set of filters on AbMPNN redesigned sequences
-                print("Running final filters on AbMPNN redesigned sequences")
-                filter_metrics, filter_results, accepted, final_struct = (
-                    filter_utils.run_filters(
-                        mpnn_trajectory,
-                        run_settings,
-                        target_settings,
-                        final_filters,
-                        io,
-                        abmpnn_sequence["seq"],
-                        trajectory_pdb_af,
-                        target_len
+                if run_settings.get("disable_filters", False):
+                    print("Filters disabled, accepting AbMPNN redesigned sequence")
+                    accepted = True
+                    filter_metrics = {}
+                    filter_results = {}
+                    final_struct = trajectory_pdb_af
+                else:
+                    print("Running final filters on AbMPNN redesigned sequences")
+                    filter_metrics, filter_results, accepted, final_struct = (
+                        filter_utils.run_filters(
+                            mpnn_trajectory,
+                            run_settings,
+                            target_settings,
+                            final_filters,
+                            io,
+                            abmpnn_sequence["seq"],
+                            trajectory_pdb_af,
+                            target_len
+                        )
                     )
-                )
                 # save trajectory
                 design_time = utils.get_clean_time(time.time(), trajectory_start_time)
                 complete_filter_data = {**filter_metrics, **filter_results}

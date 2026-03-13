@@ -3,13 +3,13 @@
 # This file defines the default configuration and specifies which sub-configs to use
 
 defaults:
-  - run: vhh      
-  - target: pdl1             
-  - filter/initial: vhh  
-  - filter/final: vhh  
-  - _self_
-  - override hydra/hydra_logging: disabled  
-  - override hydra/job_logging: disabled  
+    - run: vhh
+    - target: pdl1
+    - filter/initial: vhh
+    - filter/final: vhh
+    - _self_
+    - override hydra/hydra_logging: disabled
+    - override hydra/job_logging: disabled
 
 # high level run settings
 project_dir: "."
@@ -20,6 +20,9 @@ max_trajectories: 10000
 max_hallucinated_trajectories: 1000
 max_passing_designs: 100
 
+# disable all filters (for benchmarking without AF3/Chai)
+disable_filters: true
+
 # paths
 pdb_dir: "pdbs"
 af_params_dir: ""
@@ -28,6 +31,6 @@ dalphaball_path: "params/DAlphaBall.gcc"
 
 # silence hydra output dir
 hydra:
-  output_subdir: null
-  run:
-    dir: .
+    output_subdir: null
+    run:
+        dir: .

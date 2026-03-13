@@ -93,11 +93,20 @@ def germinal_design(
     iglm_species = run_settings.get("iglm_species", "[HUMAN]")
     ablm_model = run_settings.get("ablm_model", "iglm")
     dimer = target_settings.get("dimer", False)
-    save_filters = {
-        "plddt": run_settings.get("plddt_threshold", 0.84),
-        "i_ptm": run_settings.get("i_ptm_threshold", 0.65),
-        "i_pae": run_settings.get("i_pae_threshold", 0.3),
-    }
+    # Check if filters should be disabled (for benchmarking)
+    disable_filters = run_settings.get("disable_filters", False)
+    if disable_filters:
+        save_filters = {
+            "plddt": 0.0,
+            "i_ptm": 0.0,
+            "i_pae": float('inf'),
+        }
+    else:
+        save_filters = {
+            "plddt": run_settings.get("plddt_threshold", 0.84),
+            "i_ptm": run_settings.get("i_ptm_threshold", 0.65),
+            "i_pae": run_settings.get("i_pae_threshold", 0.3),
+        }
     seq_init_mode = run_settings.get("seq_init_mode")
     starting_binder_seq = run_settings.get("starting_binder_seq", None)
     normalize_gradient = run_settings.get("normalize_gradient", True)
@@ -356,53 +365,62 @@ def germinal_design(
     af_model.save_pdb(model_pdb_path, save_all=False)
     af_model.aux["log"]["terminate"] = ""
 
-    # let's check whether the trajectory is worth optimising by checking confidence, clashes, and contacts
-    # check clashes
-    # clash_interface = calculate_clash_score(model_pdb_path, 2.4)
-    ca_clashes = calculate_clash_score(model_pdb_path, 2.5, only_ca=True)
+    # Final filter checks - skip if disable_filters is True
+    if not disable_filters:
+        # let's check whether the trajectory is worth optimising by checking confidence, clashes, and contacts
+        # check clashes
+        # clash_interface = calculate_clash_score(model_pdb_path, 2.4)
+        ca_clashes = calculate_clash_score(model_pdb_path, 2.5, only_ca=True)
 
-    # if clash_interface > 25 or ca_clashes > 0:
-    if ca_clashes > 0:
-        af_model.aux["log"]["terminate"] = "Clashing"
-        if not fail_confidence:
-            io.update_failures("Trajectory_Clashes")
-        print("Severe clashes detected, skipping analysis")
-        print("")
-    else:
-        # check if low quality prediction
-        if (
-            final_plddt < save_filters["plddt"]
-            or final_iptm < save_filters["i_ptm"]
-            or final_ipae >= save_filters["i_pae"]
-            or fail_confidence
-        ):
-            af_model.aux["log"]["terminate"] = "LowConfidence"
+        # if clash_interface > 25 or ca_clashes > 0:
+        if ca_clashes > 0:
+            af_model.aux["log"]["terminate"] = "Clashing"
             if not fail_confidence:
-                io.update_failures("Trajectory_final_pLDDT")
-            print("Trajectory final confidence low, skipping analysis")
+                io.update_failures("Trajectory_Clashes")
+            print("Severe clashes detected, skipping analysis")
             print("")
         else:
-            # does it have enough contacts to consider?
-            binder_contacts = hotspot_residues(
-                model_pdb_path, binder_chain=binder_chain, target_chain=chain
-            )
-            binder_contacts_n = len(binder_contacts.items())
-
-            # if less than 3 contacts then protein is floating above and is not binder
-            if binder_contacts_n < 3:
+            # check if low quality prediction
+            if (
+                final_plddt < save_filters["plddt"]
+                or final_iptm < save_filters["i_ptm"]
+                or final_ipae >= save_filters["i_pae"]
+                or fail_confidence
+            ):
                 af_model.aux["log"]["terminate"] = "LowConfidence"
                 if not fail_confidence:
-                    io.update_failures("Trajectory_Contacts")
-                print("Too few contacts at the interface, skipping analysis")
+                    io.update_failures("Trajectory_final_pLDDT")
+                print("Trajectory final confidence low, skipping analysis")
                 print("")
             else:
-                # phew, trajectory is okay! We can continue
-                af_model.aux["log"]["terminate"] = ""
-                print(
-                    "Trajectory successful, final pLDDT/iPTM/iPAE: " + str(final_plddt),
-                    str(final_iptm),
-                    str(final_ipae),
+                # does it have enough contacts to consider?
+                binder_contacts = hotspot_residues(
+                    model_pdb_path, binder_chain=binder_chain, target_chain=chain
                 )
+                binder_contacts_n = len(binder_contacts.items())
+
+                # if less than 3 contacts then protein is floating above and is not binder
+                if binder_contacts_n < 3:
+                    af_model.aux["log"]["terminate"] = "LowConfidence"
+                    if not fail_confidence:
+                        io.update_failures("Trajectory_Contacts")
+                    print("Too few contacts at the interface, skipping analysis")
+                    print("")
+                else:
+                    # phew, trajectory is okay! We can continue
+                    af_model.aux["log"]["terminate"] = ""
+                    print(
+                        "Trajectory successful, final pLDDT/iPTM/iPAE: " + str(final_plddt),
+                        str(final_iptm),
+                        str(final_ipae),
+                    )
+    else:
+        print("Filters disabled, trajectory accepted without final checks")
+        print(
+            "Trajectory final pLDDT/iPTM/iPAE: " + str(final_plddt),
+            str(final_iptm),
+            str(final_ipae),
+        )
 
     ### get the sampled sequence for plotting
     af_model.get_seqs()
